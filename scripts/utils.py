@@ -41,6 +41,36 @@ def dataset_loader(dataset_dir, transform, batch_size= 128):
     
     return dataset, train_loader, val_loader, test_loader
 
+def dataset_loader_sep_transformations(dataset_dir, train_transform, val_test_transform, batch_size=128):
+    dataset = datasets.ImageFolder(root=dataset_dir)
+    num_images = len(dataset)
+    indices = list(range(num_images))
+    random.seed(50)
+    random.shuffle(indices)
+    
+    train_size = int(0.7 * num_images)
+    val_size = int(0.2 * num_images)
+    test_size = num_images - train_size - val_size
+    
+    train_indices, val_test_indices = indices[:train_size], indices[train_size:]
+    val_indices, test_indices = train_test_split(val_test_indices, test_size=test_size, random_state=3)
+    
+    train_dataset = Subset(dataset, train_indices)
+    val_dataset = Subset(dataset, val_indices)
+    test_dataset = Subset(dataset, test_indices) 
+    
+    # Apply transformations to the subsets
+    train_dataset.dataset.transform = train_transform
+    val_dataset.dataset.transform = val_test_transform
+    test_dataset.dataset.transform = val_test_transform
+    
+    # Dataloaders
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+    return dataset, train_loader, val_loader, test_loader
+
 def plot_loss_accuracy(epoch_log, loss_log, accuracy_log):
     fig, ax1 = plt.subplots()
     plt.title('Validation Accuracy & Loss vs Epoch')
